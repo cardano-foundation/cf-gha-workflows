@@ -1,0 +1,221 @@
+name: cf-gha-baseline
+
+inputs:
+  EARTHLY_VERSION:
+    description: 'Earthly version to use'
+    required: false
+    default: '0.8.15'
+  GITHUB_TOKEN:
+    description: 'GitHub token'
+    required: true
+  DOCKER_REGISTRIES:
+    description: 'List of docker registries to login to'
+    required: false
+    default: ''
+  PRIVATE_DOCKER_REGISTRY_URL:
+    description: 'Private docker registry URL'
+    required: false
+    default: ''
+  PRIVATE_DOCKER_REGISTRY_USER:
+    description: 'Private docker registry user'
+    required: false
+    default: ''
+  PRIVATE_DOCKER_REGISTRY_PASS:
+    description: 'Private docker registry password'
+    required: false
+    default: ''
+  HUB_DOCKER_COM_USER:
+    description: 'hub.docker.com user'
+    required: false
+    default: ''
+  HUB_DOCKER_COM_PASS:
+    description: 'hub.docker.com password'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    #- name: Set up QEMU
+    #  uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Docker login (private registry)
+      uses: docker/login-action@v3
+      if: contains(inputs.DOCKER_REGISTRIES, 'registry')
+      with:
+        registry: ${{ inputs.PRIVATE_DOCKER_REGISTRY_URL }}
+        username: ${{ inputs.PRIVATE_DOCKER_REGISTRY_USER }}
+        password: ${{ inputs.PRIVATE_DOCKER_REGISTRY_PASS }}
+
+    - name: Docker Login (hub.docker.com)
+      uses: docker/login-action@v3
+      if: contains(inputs.DOCKER_REGISTRIES, 'hub.docker.com')
+      with:
+        username: ${{ inputs.HUB_DOCKER_COM_USER }}
+        password: ${{ inputs.HUB_DOCKER_COM_PASS }}
+
+    - name: Docker Login (ghcr.io)
+      uses: docker/login-action@v3
+      if: contains(inputs.DOCKER_REGISTRIES, 'ghcr.io')
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.GITHUB_TOKEN }}
+
+    - name: Setup base depends
+      shell: bash
+      run: |
+        pip install yq
+
+    - uses: earthly/actions-setup@v1
+      with:
+        github-token: ${{ inputs.GITHUB_TOKEN }}
+        version: ${{ inputs.EARTHLY_VERSION }}
+
+    - name: Add repo baseline
+      shell: bash
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        if [ ! -e .githooks ]
+        then
+          cp -a ${GITHUB_ACTION_PATH}/repo-baseline/.githooks .
+          git add .githooks
+          git commit .githooks -m "chore(git): added .githooks (automated commit by gha run id $GITHUB_RUN_ID)"
+          git push origin
+        fi
+        if [ ! -e Makefile ]
+        then
+          cp -a ${GITHUB_ACTION_PATH}/repo-baseline/Makefile .
+          git add Makefile
+          git commit Makefile -m "chore(Makefile): added base Makefile (automated commit by gha run id $GITHUB_RUN_ID)"
+          git push origin
+        fi
+
+    - name: Set extra environment and metadata
+      id: metadata
+      shell: bash
+      run: |
+        # NOTE: this will be merge-commit sha for PRs
+        GIT_SHORT_COMMIT=$(git rev-parse --short ${GITHUB_SHA})
+
+        case ${GITHUB_EVENT_NAME} in
+          pull_request)
+            TRIGGERING_REF=pr
+            BRANCH_NAME=${{ github.event.pull_request.head.ref }}
+            PR_BASE_BRANCH_NAME=${{ github.event.pull_request.base.ref }}
+            PR_NUMBER=${{ github.event.pull_request.number }}
+            PR_GIT_SHORT_COMMIT=${{ github.event.pull_request.head.sha }}
+            git fetch origin ${PR_GIT_SHORT_COMMIT}
+            ;;
+          push)
+            if [ "${GITHUB_REF_TYPE}" == "tag" ]
+            then
+              TRIGGERING_REF=tag
+              TAG_NAME=${GITHUB_REF#refs/tags/}
+              DOCKER_TAG=${BRANCH_NAME}
+            else
+              TRIGGERING_REF=branch
+              BRANCH_NAME=${GITHUB_REF#refs/heads/}
+              DOCKER_TAG=${BRANCH_NAME}
+            fi
+            ;;
+          workflow_dispatch)
+            if [ ! -z "$(git for-each-ref | grep ${GIT_SHORT_COMMIT} | grep tags)" ]
+            then
+              TRIGGERING_REF=tag
+              DOCKER_TAG=$(git for-each-ref | grep ${GIT_SHORT_COMMIT} | grep tags | awk -F/ '{print $NF}')
+            else
+              TRIGGERING_REF=branch
+              BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+              DOCKER_TAG=${BRANCH_NAME}
+            fi
+            ;;
+        esac
+
+        # java artifact version guesses
+        if [ -e build.gradle.tks ]
+        then
+          GUESSED_ARTIFACT_VERSION=$(grep -oP '(?<=version = ").*(?=")' build.gradle.kts)
+        fi
+        if [ -e gradle.properties ]
+        then
+          GUESSED_ARTIFACT_VERSION=$(grep -oP '(?<=version = ").*(?=")' gradle.properties)
+        fi
+        if [ -e pom.xml ]
+        then
+          GUESSED_ARTIFACT_VERSION=$(xq -r '.project.version' pom.xml)
+        fi
+        # node artifact version guesses
+        if [ -e pockage.json ]
+        then
+          GUESSED_ARTIFACT_VERSION=$(jq -r '.version' package.json)
+        fi
+        # if no artifact version is found, default to 0.0.1
+        GUESSED_ARTIFACT_VERSION=${GUESSED_ARTIFACT_VERSION:-0.0.1}
+        # sanitize branch name for docker tag use
+        SANITIZED_BRANCH_NAME=$(echo ${BRANCH_NAME} | tr '/' '-')
+
+        # set docker tags based on triggering ref: push-to-branch, pull_request, tag, workflow_dispatch+tag, workflow_dispatch+branch 
+        case "${TRIGGERING_REF}" in
+          pr)
+            DOCKER_COMMIT_TAG=${GUESSED_ARTIFACT_VERSION}-PR${PR_NUMBER}-${GIT_SHORT_COMMIT}
+            DOCKER_COMMIT_GHRUNID_TAG=${GUESSED_ARTIFACT_VERSION}-PR${PR_NUMBER}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
+            ;;
+          branch)
+            DOCKER_COMMIT_TAG=${GUESSED_ARTIFACT_VERSION}-${SANITIZED_BRANCH_NAME}-${GIT_SHORT_COMMIT}
+            DOCKER_COMMIT_GHRUNID_TAG=${GUESSED_ARTIFACT_VERSION}-${SANITIZED_BRANCH_NAME}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
+            ;;
+          tag)
+            DOCKER_COMMIT_TAG=${TAG_NAME}-${GIT_SHORT_COMMIT}
+            DOCKER_COMMIT_GHRUNID_TAG=${TAG_NAME}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
+            ;;
+        esac
+
+        echo "[ℹ️} GITHUB_ENV / GITHUB_OUTPUT set:"
+        # set github env and step outputs (outputs are handy for use in other steps where env cannot be used)
+        echo "TRIGGERING_REF=${TRIGGERING_REF}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
+        echo "TAG_NAME=${TAG_NAME}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
+        echo "GIT_SHORT_COMMIT=${GIT_SHORT_COMMIT}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
+        echo "BRANCH_NAME=${BRANCH_NAME}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
+        echo "PR_BASE_BRANCH_NAME=${PR_BASE_BRANCH_NAME}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
+        echo "PR_NUMBER=${PR_NUMBER}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
+        echo "PR_GIT_SHORT_COMMIT=${PR_GIT_SHORT_COMMIT}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
+
+        echo "GUESSED_ARTIFACT_VERSION=${GUESSED_ARTIFACT_VERSION}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
+
+        echo "DOCKER_TAG=${DOCKER_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+        echo "DOCKER_COMMIT_TAG=${DOCKER_COMMIT_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+        echo "DOCKER_COMMIT_GHRUNID_TAG=${DOCKER_COMMIT_GHRUNID_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+        # in case of main/master branch, also tag as latest
+        case "${BRANCH_NAME}" in
+          main|master)
+            echo "EARTHLY_DOCKER_IMAGES_EXTRA_TAGS=${DOCKER_COMMIT_TAG} ${DOCKER_COMMIT_GHRUNID_TAG} ${DOCKER_TAG} latest" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+            ;;
+          *)
+            echo "EARTHLY_DOCKER_IMAGES_EXTRA_TAGS=${DOCKER_COMMIT_TAG} ${DOCKER_COMMIT_GHRUNID_TAG} ${DOCKER_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+            ;;
+        esac
+
+        echo "[ℹ️] Build trigger info:"
+        echo "- Triggering event: ${GITHUB_EVENT_NAME}"
+        echo "- Triggering reference: ${TRIGGERING_REF}"
+        case "${GITHUB_EVENT_NAME}" in
+          push|workflow_dispatch)
+            if [ "${TRIGGERING_REF}}" == "tag" ]; then
+              echo "- Triggering tag: ${TAG_NAME}"
+            else
+              echo "- Triggering branch: ${BRANCH_NAME}"
+            fi
+            ;;
+          pull_request)
+            echo "- PR branch: ${BRANCH_NAME}"
+            echo "- PR target branch: ${PR_BASE_BRANCH_NAME}"
+            echo "- PR merge commit: ${GIT_SHORT_COMMIT}"
+            echo "- PR last commit:"
+            git show --no-patch --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative ${PR_GIT_SHORT_COMMIT}
+            ;;
+        esac
