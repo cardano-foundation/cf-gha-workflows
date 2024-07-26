@@ -25,7 +25,6 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+*'
   pull_request:
     types: [ opened, synchronize ]
-    branches-ignore: [ main ]
   workflow_dispatch:
 
 jobs:
