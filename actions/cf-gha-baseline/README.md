@@ -50,3 +50,16 @@ jobs:
         DOCKER_REGISTRIES: "${{ secrets.DOCKER_REGISTRIES }}"
 ```
 
+# Example outputs
+
+* Branch builds:
+
+![image](https://github.com/user-attachments/assets/fa85609d-0861-4741-b3fa-873b27dac843)
+
+* PR builds:
+
+![image](https://github.com/user-attachments/assets/0275b24e-b296-4eab-a591-054d6727e6bf)
+
+* Tag builds:
+
+![image](https://github.com/user-attachments/assets/6fbaccb7-12c7-4f13-9140-273686d13719)
