@@ -32,6 +32,10 @@ inputs:
     description: 'hub.docker.com password'
     required: false
     default: ''
+  working-directory:
+    description: 'Working directory'
+    required: false
+    default: '.'
 
 runs:
   using: 'composite'
