@@ -103,6 +103,9 @@ runs:
       id: metadata
       shell: bash
       run: |
+
+        cd ${{ inputs.working-directory }}
+
         # NOTE: this will be merge-commit sha for PRs
         GIT_SHORT_COMMIT=$(git rev-parse --short ${GITHUB_SHA})
 
