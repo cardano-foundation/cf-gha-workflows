@@ -116,6 +116,7 @@ runs:
             PR_BASE_BRANCH_NAME=${{ github.event.pull_request.base.ref }}
             PR_NUMBER=${{ github.event.pull_request.number }}
             PR_GIT_SHORT_COMMIT=${{ github.event.pull_request.head.sha }}
+            DOCKER_TAG=PR${PR_NUMBER}
             git fetch origin ${PR_GIT_SHORT_COMMIT}
             ;;
           push)
