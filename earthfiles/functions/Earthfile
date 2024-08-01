@@ -8,14 +8,16 @@ ARG --global DOCKER_REGISTRIES=""
 ARG --global HUB_DOCKER_COM_USER="cardanofoundation"
 ARG --global PUSH=false
 
-all:
+ALL:
+  FUNCTION
   LOCALLY
   FOR image_target IN $DOCKER_IMAGES_TARGETS
     BUILD +$image_target --PUSH=$PUSH
   END
 
-docker-publish:
-  BUILD +all --PUSH=$PUSH
+DOCKER_PUBLISH:
+  FUNCTION
+  DO +all --PUSH=$PUSH
 
 TEMPLATED_DOCKER_TAG_N_PUSH:
   FUNCTION
