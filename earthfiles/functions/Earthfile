@@ -8,6 +8,16 @@ ARG --global DOCKER_REGISTRIES=""
 ARG --global HUB_DOCKER_COM_USER="cardanofoundation"
 ARG --global PUSH=false
 
+ALL:
+  FUNCTION
+  FOR image_target IN $DOCKER_IMAGES_TARGETS
+    BUILD +$image_target --PUSH=$PUSH
+  END
+
+DOCKER_PUBLISH:
+  FUNCTION
+  BUILD +all --PUSH=$PUSH 
+
 DOCKER_TAG_N_PUSH:
   FUNCTION
   ARG EARTHLY_GIT_SHORT_HASH
