@@ -145,7 +145,7 @@ runs:
         esac
 
         # java artifact version guesses
-        if [ -e build.gradle.tks ]
+        if [ -e build.gradle.kts ]
         then
           GUESSED_ARTIFACT_VERSION=$(grep -oP '(?<=version = ").*(?=")' build.gradle.kts)
         fi
