@@ -1,0 +1,40 @@
+VERSION 0.8
+
+IMPORT github.com/cardano-foundation/cf-gha-workflows/./earthfiles/functions:chore/add-earthly-lib AS f
+unctions
+
+ARG --global DOCKER_IMAGES_TARGETS="full-earthly-example local-dockerfile-exmaple"
+ARG --global PUSH=false
+ARG --global DOCKER_IMAGES_EXTRA_TAGS="0.0.0-feature-branch-COMMIT-RUNID 0.0.0"
+
+all:
+  FOR image_target IN $DOCKER_IMAGES_TARGETS
+    BUILD +$image_target --PUSH=$PUSH
+  END
+
+docker-publish:
+  BUILD +all --PUSH=$PUSH
+
+full-earthly-example:
+  ARG EARTHLY_TARGET_NAME
+  LET DOCKER_IMAGE_NAME=${DOCKER_IMAGE_PREFIX}-${EARTHLY_TARGET_NAME}
+  FROM alpine
+  RUN apk add curl
+  SAVE IMAGE ${DOCKER_IMAGE_NAME}
+  DO functions+TEMPLATED_DOCKER_TAG_N_PUSH \
+    --PUSH=$PUSH \
+    --DOCKER_IMAGE_NAME=${DOCKER_IMAGE_NAME} \
+    --DOCKER_IMAGES_EXTRA_TAGS="${DOCKER_IMAGES_EXTRA_TAGS}"
+
+local-dockerfile-exmaple:
+  # you need to wait for build to finish or earthly might fail while parallelizing using the 'all'
+  WAIT
+    FROM DOCKERFILE -f Dockerfile .
+  END
+  WAIT
+    SAVE IMAGE ${DOCKER_IMAGE_NAME}
+  END
+  DO functions+TEMPLATED_DOCKER_TAG_N_PUSH \
+    --PUSH=$PUSH \
+    --DOCKER_IMAGE_NAME=${DOCKER_IMAGE_NAME} \
+    --DOCKER_IMAGES_EXTRA_TAGS="${DOCKER_IMAGES_EXTRA_TAGS}"
