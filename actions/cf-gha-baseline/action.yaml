@@ -158,7 +158,7 @@ runs:
           GUESSED_ARTIFACT_VERSION=$(xq -r '.project.version' pom.xml)
         fi
         # node artifact version guesses
-        if [ -e pockage.json ]
+        if [ -e package.json ]
         then
           GUESSED_ARTIFACT_VERSION=$(jq -r '.version' package.json)
         fi
