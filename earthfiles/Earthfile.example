@@ -1,7 +1,6 @@
 VERSION 0.8
 
-IMPORT github.com/cardano-foundation/cf-gha-workflows/./earthfiles/functions:chore/add-earthly-lib AS f
-unctions
+IMPORT --allow-privileged github.com/cardano-foundation/cf-gha-workflows/./earthfiles/functions:main AS functions
 
 ARG --global DOCKER_IMAGES_TARGETS="full-earthly-example local-dockerfile-exmaple"
 ARG --global PUSH=false
