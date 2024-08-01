@@ -10,6 +10,7 @@ ARG --global PUSH=false
 
 ALL:
   FUNCTION
+  LOCALLY
   FOR image_target IN $DOCKER_IMAGES_TARGETS
     BUILD +$image_target --PUSH=$PUSH
   END
