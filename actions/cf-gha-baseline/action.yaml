@@ -144,6 +144,7 @@ runs:
             ;;
         esac
 
+        set +e # avoid failing the script if grep fails
         # java artifact version guesses
         if [ -e build.gradle.kts ]
         then
@@ -162,6 +163,7 @@ runs:
         then
           GUESSED_ARTIFACT_VERSION=$(jq -r '.version' package.json)
         fi
+        set -e # re-enable errexit
         # if no artifact version is found, default to 0.0.1
         GUESSED_ARTIFACT_VERSION=${GUESSED_ARTIFACT_VERSION:-0.0.1}
         # sanitize branch name for docker tag use
