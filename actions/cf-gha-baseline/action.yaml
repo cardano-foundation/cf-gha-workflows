@@ -37,6 +37,44 @@ inputs:
     required: false
     default: '.'
 
+outputs:
+  TRIGGERING_REF: 
+    description: 'Triggering reference'
+    value: ${{ steps.metadata.outputs.TRIGGERING_REF }}
+  TAG_NAME:
+    description: 'Tag name'
+    value: ${{ steps.metadata.outputs.TAG_NAME }}
+  GIT_SHORT_COMMIT: 
+    description: 'Git short commit'
+    value: ${{ steps.metadata.outputs.GIT_SHORT_COMMIT }}
+  BRANCH_NAME:
+    description: 'Branch name'
+    value: ${{ steps.metadata.outputs.BRANCH_NAME }}
+  PR_BASE_BRANCH_NAME:
+    description: 'PR base branch name'
+    value: ${{ steps.metadata.outputs.PR_BASE_BRANCH_NAME }}
+  PR_NUMBER:
+    description: 'PR number'
+    value: ${{ steps.metadata.outputs.PR_NUMBER }}
+  PR_GIT_SHORT_COMMIT:
+    description: 'PR git short commit'
+    value: ${{ steps.metadata.outputs.PR_GIT_SHORT_COMMIT }}
+  GUESSED_ARTIFACT_VERSION:
+    description: 'Guessed artifact version'
+    value: ${{ steps.metadata.outputs.GUESSED_ARTIFACT_VERSION }}
+  DOCKER_TAG:
+    description: 'Docker tag'
+    value: ${{ steps.metadata.outputs.DOCKER_TAG }}
+  DOCKER_COMMIT_TAG:
+    description: 'Docker commit tag'
+    value: ${{ steps.metadata.outputs.DOCKER_COMMIT_TAG }}
+  DOCKER_COMMIT_GHRUNID_TAG:
+    description: 'Docker commit gh run id tag'
+    value: ${{ steps.metadata.outputs.DOCKER_COMMIT_GHRUNID_TAG }}
+  EARTHLY_DOCKER_IMAGES_EXTRA_TAGS:
+    description: 'Earthly docker images extra tags'
+    value: ${{ steps.metadata.outputs.EARTHLY_DOCKER_IMAGES_EXTRA_TAGS }}
+
 runs:
   using: 'composite'
   steps:
