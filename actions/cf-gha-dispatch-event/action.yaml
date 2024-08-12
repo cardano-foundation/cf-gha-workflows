@@ -30,16 +30,14 @@ runs:
       shell: bash
       run: |
         
-        event_type=${EVENT_TYPE}
-
         cat > /tmp/payload.json <<EOF
         {
-          "event_type": "${EVENT_TYPE}",
+          "event_type": "${{ inputs.EVENT_TYPE }}",
           "client_payload": {
-              "TRIGGERING_EVENT": "${GITHUB_EVENT_NAME}",
-              "TRIGGERING_REF": "${TRIGGERING_REF}",
-              "TRIGGERING_BRANCH": "${TRIGGERING_BRANCH}",
-              "GIT_SHORT_COMMIT": "${GIT_SHORT_COMMIT}"
+              "TRIGGERING_EVENT": "${{ inputs.TRIGGERING_EVENT }}",
+              "TRIGGERING_REF": "${{ inputs.TRIGGERING_REF }}",
+              "TRIGGERING_BRANCH": "${{ inputs.TRIGGERING_BRANCH }}",
+              "GIT_SHORT_COMMIT": "${{ inputs.GIT_SHORT_COMMIT }}"
           }
         }
         EOF
