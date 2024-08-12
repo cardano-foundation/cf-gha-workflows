@@ -34,11 +34,11 @@ runs:
 
         cat > /tmp/payload.json <<EOF
         {
-          "event_type": "${event_type}",
+          "event_type": "${EVENT_TYPE}",
           "client_payload": {
               "TRIGGERING_EVENT": "${GITHUB_EVENT_NAME}",
               "TRIGGERING_REF": "${TRIGGERING_REF}",
-              "TRIGGERING_BRANCH": "${TRIGGERING_BRANCH_NAME}",
+              "TRIGGERING_BRANCH": "${TRIGGERING_BRANCH}",
               "GIT_SHORT_COMMIT": "${GIT_SHORT_COMMIT}"
           }
         }
