@@ -208,11 +208,13 @@ runs:
         # set docker tags based on triggering ref: push-to-branch, pull_request, tag, workflow_dispatch+tag, workflow_dispatch+branch 
         case "${TRIGGERING_REF}" in
           pr)
-            DOCKER_COMMIT_TAG=${GUESSED_ARTIFACT_VERSION}-PR${PR_NUMBER}-${GIT_SHORT_COMMIT}
+            DOCKER_VERSIONED_COMMIT_TAG=${GUESSED_ARTIFACT_VERSION}-PR${PR_NUMBER}-${GIT_SHORT_COMMIT}
+            DOCKER_COMMIT_TAG=PR${PR_NUMBER}-${GIT_SHORT_COMMIT}
             DOCKER_COMMIT_GHRUNID_TAG=${GUESSED_ARTIFACT_VERSION}-PR${PR_NUMBER}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
             ;;
           branch)
-            DOCKER_COMMIT_TAG=${GUESSED_ARTIFACT_VERSION}-${BRANCH_NAME////-}-${GIT_SHORT_COMMIT}
+            DOCKER_VERSIONED_COMMIT_TAG=${GUESSED_ARTIFACT_VERSION}-${BRANCH_NAME////-}-${GIT_SHORT_COMMIT}
+            DOCKER_COMMIT_TAG=${BRANCH_NAME////-}-${GIT_SHORT_COMMIT}
             DOCKER_COMMIT_GHRUNID_TAG=${GUESSED_ARTIFACT_VERSION}-${BRANCH_NAME////-}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
             ;;
           tag)
@@ -234,15 +236,16 @@ runs:
         echo "GUESSED_ARTIFACT_VERSION=${GUESSED_ARTIFACT_VERSION}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
 
         echo "DOCKER_TAG=${DOCKER_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+        echo "DOCKER_VERSIONED_COMMIT_TAG=${DOCKER_VERSIONED_COMMIT_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
         echo "DOCKER_COMMIT_TAG=${DOCKER_COMMIT_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
         echo "DOCKER_COMMIT_GHRUNID_TAG=${DOCKER_COMMIT_GHRUNID_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
         # in case of main/master branch, also tag as latest
         case "${BRANCH_NAME}" in
           main|master)
-            echo "EARTHLY_DOCKER_IMAGES_EXTRA_TAGS=${DOCKER_COMMIT_TAG} ${DOCKER_COMMIT_GHRUNID_TAG} ${DOCKER_TAG} latest" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+            echo "EARTHLY_DOCKER_IMAGES_EXTRA_TAGS=${DOCKER_VERSIONED_COMMIT_TAG} ${DOCKER_COMMIT_TAG} ${DOCKER_COMMIT_GHRUNID_TAG} ${DOCKER_TAG} latest" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
             ;;
           *)
-            echo "EARTHLY_DOCKER_IMAGES_EXTRA_TAGS=${DOCKER_COMMIT_TAG} ${DOCKER_COMMIT_GHRUNID_TAG} ${DOCKER_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+            echo "EARTHLY_DOCKER_IMAGES_EXTRA_TAGS=${DOCKER_VERSIONED_COMMIT_TAG} ${DOCKER_COMMIT_TAG} ${DOCKER_COMMIT_GHRUNID_TAG} ${DOCKER_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
             ;;
         esac
 
