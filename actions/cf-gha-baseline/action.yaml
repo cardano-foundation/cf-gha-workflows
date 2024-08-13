@@ -71,6 +71,12 @@ outputs:
   DOCKER_COMMIT_GHRUNID_TAG:
     description: 'Docker commit gh run id tag'
     value: ${{ steps.metadata.outputs.DOCKER_COMMIT_GHRUNID_TAG }}
+  DOCKER_VERSIONED_COMMIT_TAG:
+    description: 'Docker versioned commit tag'
+    value: ${{ steps.metadata.outputs.DOCKER_VERSIONED_COMMIT_TAG }}
+  DOCKER_VERSIONED_COMMIT_GHRUNID_TAG:
+    description: 'Docker versioned commit gh run id tag'
+    value: ${{ steps.metadata.outputs.DOCKER_VERSIONED_COMMIT_GHRUNID_TAG }}
   EARTHLY_DOCKER_IMAGES_EXTRA_TAGS:
     description: 'Earthly docker images extra tags'
     value: ${{ steps.metadata.outputs.EARTHLY_DOCKER_IMAGES_EXTRA_TAGS }}
@@ -209,13 +215,15 @@ runs:
         case "${TRIGGERING_REF}" in
           pr)
             DOCKER_VERSIONED_COMMIT_TAG=${GUESSED_ARTIFACT_VERSION}-PR${PR_NUMBER}-${GIT_SHORT_COMMIT}
+            DOCKER_VERSIONED_COMMIT_GHRUNID_TAG=${GUESSED_ARTIFACT_VERSION}-PR${PR_NUMBER}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
             DOCKER_COMMIT_TAG=PR${PR_NUMBER}-${GIT_SHORT_COMMIT}
-            DOCKER_COMMIT_GHRUNID_TAG=${GUESSED_ARTIFACT_VERSION}-PR${PR_NUMBER}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
+            DOCKER_COMMIT_GHRUNID_TAG=PR${PR_NUMBER}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
             ;;
           branch)
             DOCKER_VERSIONED_COMMIT_TAG=${GUESSED_ARTIFACT_VERSION}-${BRANCH_NAME////-}-${GIT_SHORT_COMMIT}
+            DOCKER_VERSIONED_COMMIT_GHRUNID_TAG=${GUESSED_ARTIFACT_VERSION}-${BRANCH_NAME////-}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
             DOCKER_COMMIT_TAG=${BRANCH_NAME////-}-${GIT_SHORT_COMMIT}
-            DOCKER_COMMIT_GHRUNID_TAG=${GUESSED_ARTIFACT_VERSION}-${BRANCH_NAME////-}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
+            DOCKER_COMMIT_GHRUNID_TAG=${BRANCH_NAME////-}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
             ;;
           tag)
             DOCKER_COMMIT_TAG=${TAG_NAME}-${GIT_SHORT_COMMIT}
@@ -237,6 +245,7 @@ runs:
 
         echo "DOCKER_TAG=${DOCKER_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
         echo "DOCKER_VERSIONED_COMMIT_TAG=${DOCKER_VERSIONED_COMMIT_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+        echo "DOCKER_VERSIONED_COMMIT_GHRUNID_TAG=${DOCKER_VERSIONED_COMMIT_GHRUNID_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
         echo "DOCKER_COMMIT_TAG=${DOCKER_COMMIT_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
         echo "DOCKER_COMMIT_GHRUNID_TAG=${DOCKER_COMMIT_GHRUNID_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
         # in case of main/master branch, also tag as latest
