@@ -128,18 +128,30 @@ runs:
       run: |
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+        if [ "${GITHUB_EVENT_NAME}" == "pull_request" ]
+        then
+          git fetch --all --tags
+          git checkout ${{ github.event.pull_request.head.ref }}
+        fi
+
         if [ ! -e .githooks ]
         then
           cp -a ${GITHUB_ACTION_PATH}/repo-baseline/.githooks .
           git add .githooks
           git commit .githooks -m "chore(git): added .githooks (automated commit by gha run id $GITHUB_RUN_ID)"
-          git push origin
         fi
         if [ ! -e Makefile ]
         then
           cp -a ${GITHUB_ACTION_PATH}/repo-baseline/Makefile .
           git add Makefile
           git commit Makefile -m "chore(Makefile): added base Makefile (automated commit by gha run id $GITHUB_RUN_ID)"
+        fi
+
+        if [ "${GITHUB_EVENT_NAME}" == "pull_request" ]
+        then
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+        else
           git push origin
         fi
 
