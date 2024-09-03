@@ -132,7 +132,7 @@ runs:
 
         if [ "${GITHUB_EVENT_NAME}" == "pull_request" ]
         then
-          GIT_PUSH_ARGS=origin HEAD:${{ github.event.pull_request.head.ref }}
+          GIT_PUSH_ARGS="origin HEAD:${{ github.event.pull_request.head.ref }}"
         else
           GIT_PUSH_ARGS=origin
         fi
