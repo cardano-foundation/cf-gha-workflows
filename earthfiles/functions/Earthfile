@@ -24,7 +24,7 @@ DOCKER_LABELS:
   ARG LABELS
   LET KEY=""
   LET VAL=""
-  FOR line IN $LABELS
+  FOR --sep , pair IN $LABELS
     SET KEY=$(echo $line | awk -F= '{print $1}')
     SET VAL=$(echo $line | awk -F= '{print $2}')
     RUN echo $KEY=$VAL
