@@ -251,7 +251,8 @@ runs:
       id: docker-metadata
       shell: bash
       run: |
-        echo "DOCKER_METADATA_OUTPUT_LABELS=$(echo ${DOCKER_METADATA_OUTPUT_LABELS})" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+        DOCKER_METADATA_OUTPUT_LABELS_COMMA_SEPARATED=$(echo ${DOCKER_METADATA_OUTPUT_JSON} | jq -r '.labels | to_entries[] | join("=")' | while read line; do echo -n $line,; done | sed 's|,$||')
+        echo "DOCKER_METADATA_OUTPUT_LABELS_COMMA_SEPARATED=${DOCKER_METADATA_OUTPUT_LABELS_COMMA_SEPARATED}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
 
     - name: Output metadata info
       shell: bash
