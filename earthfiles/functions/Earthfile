@@ -19,6 +19,17 @@ DOCKER_PUBLISH:
   FUNCTION
   BUILD +all --PUSH=$PUSH 
 
+DOCKER_LABELS:
+  FUNCTION
+  ARG LABELS
+  LET KEY=""
+  LET VAL=""
+  FOR line IN $LABELS
+    SET KEY=$(echo $line | awk -F= '{print $1}')
+    SET VAL=$(echo $line | awk -F= '{print $2}')
+    LABEL $KEY=$VAL
+  END
+
 DOCKER_TAG_N_PUSH:
   FUNCTION
   ARG EARTHLY_GIT_SHORT_HASH
