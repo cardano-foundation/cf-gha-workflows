@@ -80,9 +80,9 @@ outputs:
   EARTHLY_DOCKER_IMAGES_EXTRA_TAGS:
     description: 'Earthly docker images extra tags'
     value: ${{ steps.metadata.outputs.EARTHLY_DOCKER_IMAGES_EXTRA_TAGS }}
-  DOCKER_METADATA_OUTPUT_LABELS:
-    description: 'Docker metadata output labels'
-    value: ${{ steps.docker-metadata.outputs.DOCKER_METADATA_OUTPUT_LABELS }}
+  DOCKER_METADATA_OUTPUT_LABELS_COMMA_SEPARATED:
+    description: 'Docker metadata output labels comma separated'
+    value: ${{ steps.docker-metadata.outputs.DOCKER_METADATA_OUTPUT_LABELS_COMMA_SEPARATED }}
 
 runs:
   using: 'composite'
