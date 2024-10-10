@@ -25,8 +25,8 @@ DOCKER_LABELS:
   LET KEY=""
   LET VAL=""
   FOR --sep , pair IN $LABELS
-    SET KEY=$(echo $line | awk -F= '{print $1}')
-    SET VAL=$(echo $line | awk -F= '{print $2}')
+    SET KEY=$(echo $pair | awk -F= '{print $1}')
+    SET VAL=$(echo $pair | awk -F= '{print $2}')
     RUN echo $KEY=$VAL
     LABEL $KEY=$VAL
   END
