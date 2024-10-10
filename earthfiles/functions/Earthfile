@@ -27,6 +27,7 @@ DOCKER_LABELS:
   FOR line IN $LABELS
     SET KEY=$(echo $line | awk -F= '{print $1}')
     SET VAL=$(echo $line | awk -F= '{print $2}')
+    RUN echo $KEY=$VAL
     LABEL $KEY=$VAL
   END
 
