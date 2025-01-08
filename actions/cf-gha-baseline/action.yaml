@@ -91,9 +91,11 @@ runs:
     #  uses: docker/setup-qemu-action@v3
 
     - name: Check original github-actions docker version
+      shell: bash
       run: docker --version
 
     - name: Update docker to latest version
+      shell: bash
       run: |
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
         sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu  $(lsb_release -cs)  stable"
@@ -101,6 +103,7 @@ runs:
         sudo apt-get install docker-ce
 
     - name: Check updated docker version
+      shell: bash
       run: docker --version
 
     - name: Setup Docker Buildx
