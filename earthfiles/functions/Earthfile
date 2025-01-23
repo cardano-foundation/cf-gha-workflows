@@ -35,29 +35,42 @@ DOCKER_TAG_N_PUSH:
   FUNCTION
   ARG EARTHLY_GIT_SHORT_HASH
   ARG PUSH # we use this as --push is not supported in LOCALLY blocks
+  ARG TARGET_PLATFORM # if specified, only the platform-specific tags will be pushed
   ARG DOCKER_IMAGE_NAME
   ARG DOCKER_IMAGES_EXTRA_TAGS
   ARG DOCKER_REGISTRIES
   LOCALLY
+
+  IF [ "$TARGET_PLATFORM" != "" ]
+    LET TARGET_PLATFORM_TAG="_$(echo $TARGET_PLATFORM | sed 's|/|_|g')"
+  END
+  LET LATEST_IMAGE_TAG=latest${TARGET_PLATFORM_TAG}
+  LET COMMIT_TAG=${EARTHLY_GIT_SHORT_HASH}${TARGET_PLATFORM_TAG}
+
   FOR registry IN $DOCKER_REGISTRIES
+    # Push the extra tags
     FOR image_tag IN $DOCKER_IMAGES_EXTRA_TAGS
+
+      LET IMAGE_TAG=${image_tag}${TARGET_PLATFORM_TAG}
+
       IF [ "$registry" = "hub.docker.com" ]
-        RUN echo docker tag ${DOCKER_IMAGE_NAME}:latest ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${image_tag} && \
-            docker tag ${DOCKER_IMAGE_NAME}:latest ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${image_tag}
-        RUN if [ "$PUSH" = "true" ]; then docker push ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${image_tag}; fi
+        RUN echo docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG} && \
+            docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}
+        RUN if [ "$PUSH" = "true" ]; then docker push ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}; fi
       ELSE
-        RUN echo docker tag ${DOCKER_IMAGE_NAME}:latest ${registry}/${DOCKER_IMAGE_NAME}:${image_tag} && \
-            docker tag ${DOCKER_IMAGE_NAME}:latest ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}
-        RUN if [ "$PUSH" = "true" ]; then docker push ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}; fi
+        RUN echo docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${registry}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG} && \
+            docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${registry}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}
+        RUN if [ "$PUSH" = "true" ]; then docker push ${registry}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}; fi
       END
     END
+    # Push short commit tag
     IF [ "$registry" = "hub.docker.com" ]
-      RUN echo docker tag ${DOCKER_IMAGE_NAME}:latest ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${EARTHLY_GIT_SHORT_HASH} && \
-          docker tag ${DOCKER_IMAGE_NAME}:latest ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${EARTHLY_GIT_SHORT_HASH}
-      RUN if [ "$PUSH" = "true" ]; then docker push ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${EARTHLY_GIT_SHORT_HASH}; fi
+      RUN echo docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${COMMIT_TAG} && \
+          docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${COMMIT_TAG}
+      RUN if [ "$PUSH" = "true" ]; then docker push ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${COMMIT_TAG}; fi
     ELSE
-      RUN echo docker tag ${DOCKER_IMAGE_NAME}:latest ${registry}/${DOCKER_IMAGE_NAME}:${EARTHLY_GIT_SHORT_HASH} && \
-          docker tag ${DOCKER_IMAGE_NAME}:latest ${registry}/${DOCKER_IMAGE_NAME}:${EARTHLY_GIT_SHORT_HASH}
-      RUN if [ "$PUSH" = "true" ]; then docker push ${registry}/${DOCKER_IMAGE_NAME}:${EARTHLY_GIT_SHORT_HASH}; fi
+      RUN echo docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${registry}/${DOCKER_IMAGE_NAME}:${COMMIT_TAG} && \
+          docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${registry}/${DOCKER_IMAGE_NAME}:${COMMIT_TAG}
+      RUN if [ "$PUSH" = "true" ]; then docker push ${registry}/${DOCKER_IMAGE_NAME}:${COMMIT_TAG}; fi
     END
   END
