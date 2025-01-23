@@ -50,7 +50,7 @@ DOCKER_TAG_N_PUSH:
 
   FOR registry IN $DOCKER_REGISTRIES
     # Push the extra tags
-    FOR image_tag IN $DOCKER_IMAGES_EXTRA_TAGS
+    FOR image_tag IN $DOCKER_IMAGES_EXTRA_TAGS $COMMIT_TAG
 
       SET IMAGE_TAG=${image_tag}${TARGET_PLATFORM_TAG}
 
@@ -64,14 +64,27 @@ DOCKER_TAG_N_PUSH:
         RUN if [ "$PUSH" = "true" ]; then docker push ${registry}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}; fi
       END
     END
-    # Push short commit tag
-    IF [ "$registry" = "hub.docker.com" ]
-      RUN echo docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${COMMIT_TAG} && \
-          docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${COMMIT_TAG}
-      RUN if [ "$PUSH" = "true" ]; then docker push ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${COMMIT_TAG}; fi
-    ELSE
-      RUN echo docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${registry}/${DOCKER_IMAGE_NAME}:${COMMIT_TAG} && \
-          docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${registry}/${DOCKER_IMAGE_NAME}:${COMMIT_TAG}
-      RUN if [ "$PUSH" = "true" ]; then docker push ${registry}/${DOCKER_IMAGE_NAME}:${COMMIT_TAG}; fi
+  END
+
+DOCKER_MANIFESTS_MERGE:
+  FUNCTION
+  ARG EARTHLY_GIT_SHORT_HASH
+  ARG PLATFORMS
+  ARG DOCKER_IMAGE_NAME
+  ARG DOCKER_IMAGES_EXTRA_TAGS
+  ARG DOCKER_REGISTRIES
+  ARG PUSH
+  LOCALLY
+  LET PLATFORM_TAGS=$(echo $PLATFORMS | sed 's|/|_|g')
+
+  FOR registry IN $DOCKER_REGISTRIES
+    FOR image_tag IN $DOCKER_IMAGES_EXTRA_TAGS ${EARTHLY_GIT_SHORT_HASH}
+      FOR platform IN $PLATFORM_TAGS
+        RUN echo docker manifest create ${registry}/${DOCKER_IMAGE_NAME}:${image_tag} \
+          --amend ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}_${platform} && \
+          docker manifest create ${registry}/${DOCKER_IMAGE_NAME}:${image_tag} \
+          --amend ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}_${platform}
+      END
+      RUN if [ "$PUSH" = "true" ]; then docker manifest push ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}; fi
     END
   END
