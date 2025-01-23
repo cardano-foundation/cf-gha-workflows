@@ -46,12 +46,13 @@ DOCKER_TAG_N_PUSH:
   END
   LET LATEST_IMAGE_TAG=latest${TARGET_PLATFORM_TAG}
   LET COMMIT_TAG=${EARTHLY_GIT_SHORT_HASH}${TARGET_PLATFORM_TAG}
+  LET IMAGE_TAG
 
   FOR registry IN $DOCKER_REGISTRIES
     # Push the extra tags
     FOR image_tag IN $DOCKER_IMAGES_EXTRA_TAGS
 
-      LET IMAGE_TAG=${image_tag}${TARGET_PLATFORM_TAG}
+      SET IMAGE_TAG=${image_tag}${TARGET_PLATFORM_TAG}
 
       IF [ "$registry" = "hub.docker.com" ]
         RUN echo docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG} && \
