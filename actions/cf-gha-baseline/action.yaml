@@ -142,9 +142,10 @@ runs:
             BRANCH_NAME=${{ github.event.pull_request.head.ref }}
             PR_BASE_BRANCH_NAME=${{ github.event.pull_request.base.ref }}
             PR_NUMBER=${{ github.event.pull_request.number }}
-            PR_GIT_SHORT_COMMIT=${{ github.event.pull_request.head.sha }}
+            PR_GIT_COMMIT=${{ github.event.pull_request.head.sha }}
+            PR_GIT_SHORT_COMMIT=$(git rev-parse --short ${{ github.event.pull_request.head.sha }})
             DOCKER_TAG=PR${PR_NUMBER}
-            git fetch origin ${PR_GIT_SHORT_COMMIT}
+            git fetch origin ${PR_GIT_COMMIT}
             ;;
           push)
             if [ "${GITHUB_REF_TYPE}" == "tag" ]
