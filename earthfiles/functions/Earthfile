@@ -81,17 +81,18 @@ DOCKER_MANIFESTS_MERGE:
     FOR image_tag IN $DOCKER_IMAGES_EXTRA_TAGS ${EARTHLY_GIT_SHORT_HASH}
       FOR platform IN $PLATFORM_TAGS
         IF [ "$registry" = "hub.docker.com" ]
-           RUN echo docker manifest create ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${image_tag} \
+          RUN echo docker manifest create ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${image_tag} \
             --amend ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${image_tag}_${platform} && \
             docker manifest create ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${image_tag} \
             --amend ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${image_tag}_${platform}
+          RUN if [ "$PUSH" = "true" ]; then docker manifest push ${HUB_DOCKER_COM_USER}/${DOCKER_IMAGE_NAME}:${image_tag}; fi
         ELSE
           RUN echo docker manifest create ${registry}/${DOCKER_IMAGE_NAME}:${image_tag} \
             --amend ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}_${platform} && \
             docker manifest create ${registry}/${DOCKER_IMAGE_NAME}:${image_tag} \
             --amend ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}_${platform}
+          RUN if [ "$PUSH" = "true" ]; then docker manifest push ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}; fi
         END
       END
-      RUN if [ "$PUSH" = "true" ]; then docker manifest push ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}; fi
     END
   END
