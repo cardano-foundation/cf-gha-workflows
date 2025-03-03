@@ -22,6 +22,9 @@ inputs:
   TRIGGERING_BRANCH:
     description: 'Branch triggering the workflow'
     required: false
+  TRIGGERING_TAG:
+    description: 'Tag triggering the workflow'
+    required: false
   TRIGGERING_GHRUNID:
     description: 'GitHub run ID triggering the workflow'
     required: false
@@ -43,6 +46,7 @@ runs:
               "TRIGGERING_EVENT": "${{ inputs.TRIGGERING_EVENT }}",
               "TRIGGERING_REF": "${{ inputs.TRIGGERING_REF }}",
               "TRIGGERING_BRANCH": "${{ inputs.TRIGGERING_BRANCH }}",
+              "TRIGGERING_TAG": "${{ inputs.TRIGGERING_TAG }}",
               "TRIGGERING_GHRUNID": "${{ inputs.TRIGGERING_GHRUNID }}",
               "TRIGGERING_JOB_NAME": "${{ inputs.TRIGGERING_JOB_NAME }}",
               "GIT_SHORT_COMMIT": "${{ inputs.GIT_SHORT_COMMIT }}"
