@@ -152,7 +152,7 @@ runs:
             then
               TRIGGERING_REF=tag
               TAG_NAME=${GITHUB_REF#refs/tags/}
-              DOCKER_TAG=${BRANCH_NAME////-}
+              DOCKER_TAG=${TAG_NAME}
             else
               TRIGGERING_REF=branch
               BRANCH_NAME=${GITHUB_REF#refs/heads/}
