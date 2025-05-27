@@ -36,6 +36,10 @@ inputs:
     description: 'Working directory'
     required: false
     default: '.'
+  setup_earthly:
+    description: 'Run Earthly setup step?'
+    required: false
+    default: 'true'
 
 outputs:
   TRIGGERING_REF: 
@@ -122,6 +126,7 @@ runs:
         pip install yq
 
     - uses: earthly/actions-setup@v1
+      if: ${{ inputs.setup_earthly == 'true' }}
       with:
         github-token: ${{ inputs.GITHUB_TOKEN }}
         version: ${{ inputs.EARTHLY_VERSION }}
