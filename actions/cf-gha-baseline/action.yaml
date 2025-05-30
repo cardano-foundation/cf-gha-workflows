@@ -125,7 +125,7 @@ runs:
       run: |
         pip install yq
 
-    - uses: earthly/actions-setup@v1
+    - uses: earthly/actions-setup@main
       if: ${{ inputs.setup_earthly == 'true' }}
       with:
         use-cache: true
