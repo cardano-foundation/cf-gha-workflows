@@ -181,7 +181,7 @@ runs:
         esac
 
         FILTERED_DOCKER_REGISTRIES="" 
-        for docker_registry in $DOCKER_REGISTRIES
+        for docker_registry in "${{ inputs.DOCKER_REGISTRIES }}"
         do
           case $docker_registry in
             ghcr.io*|docker.io*) IS_PUBLIC_REPO="true";;
