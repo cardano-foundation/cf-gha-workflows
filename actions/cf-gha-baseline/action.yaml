@@ -183,34 +183,27 @@ runs:
             ;;
         esac
 
-        echo "[ℹ️} Filtering docker registries:"
         DOCKER_REGISTRIES_FILTERED="" 
         for docker_registry in ${{ inputs.DOCKER_REGISTRIES }}
         do
           case $docker_registry in
             ghcr.io*|docker.io*) 
-              echo "*** ghcr.io docker.io"
               IS_PUBLIC_REPO="true"
               ;;
-            hub.docker.com*) 
-              echo "*** docker hub"
+            hub.docker.com) 
               IS_PUBLIC_REPO="true"
               docker_registry="docker.io/cardanofoundation"
               ;;
             *) 
-              echo "*** all others"
               IS_PUBLIC_REPO="false"
               ;;
           esac
           if [[ "$IS_PUBLIC_REPO" = "true" && "$PUSH_PUBLIC" = "false" ]]
           then
-            echo "*** not adding repo"
             continue
           fi
-          echo "*** adding repo"
           DOCKER_REGISTRIES_FILTERED="$DOCKER_REGISTRIES_FILTERED $docker_registry"
         done
-        echo "*** done"
 
         set +e # avoid failing the script if grep fails
         # java artifact version guesses
