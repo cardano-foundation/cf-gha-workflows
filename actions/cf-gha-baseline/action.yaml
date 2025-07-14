@@ -185,7 +185,7 @@ runs:
 
         echo "[ℹ️} Filtering docker registries:"
         DOCKER_REGISTRIES_FILTERED="" 
-        for docker_registry in "${{ inputs.DOCKER_REGISTRIES }}"
+        for docker_registry in ${{ inputs.DOCKER_REGISTRIES }}
         do
           case $docker_registry in
             ghcr.io*|docker.io*) 
