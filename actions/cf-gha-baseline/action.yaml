@@ -184,9 +184,17 @@ runs:
         for docker_registry in "${{ inputs.DOCKER_REGISTRIES }}"
         do
           case $docker_registry in
-            ghcr.io*|docker.io*) IS_PUBLIC_REPO="true";;
-            hub.docker.com) IS_PUBLIC_REPO="true"; docker_registry="docker.io/cardanofoundation";;
-            *) IS_PUBLIC_REPO="false";;
+            ghcr.io*|docker.io*) 
+              IS_PUBLIC_REPO="true"
+              ;;
+            hub.docker.com) 
+              IS_PUBLIC_REPO="true"
+              echo "docker hub registry detected"
+              docker_registry="docker.io/cardanofoundation"
+              ;;
+            *) 
+              IS_PUBLIC_REPO="false"
+              ;;
           esac
           if [[ "$IS_PUBLIC_REPO" = "true" && "$PUSH_PUBLIC" = "false" ]]
           then
