@@ -69,6 +69,9 @@ outputs:
   DOCKER_TAG:
     description: 'Docker tag'
     value: ${{ steps.metadata.outputs.DOCKER_TAG }}
+  DOCKER_REGISTRIES_FILTERED:
+    description: 'Filtered docker repositories'
+    value: ${{ steps.metadata.outputs.DOCKER_REGISTRIES_FILTERED }}
   DOCKER_COMMIT_TAG:
     description: 'Docker commit tag'
     value: ${{ steps.metadata.outputs.DOCKER_COMMIT_TAG }}
@@ -180,14 +183,14 @@ runs:
             ;;
         esac
 
-        FILTERED_DOCKER_REGISTRIES="" 
+        DOCKER_REGISTRIES_FILTERED="" 
         for docker_registry in "${{ inputs.DOCKER_REGISTRIES }}"
         do
           case $docker_registry in
             ghcr.io*|docker.io*) 
               IS_PUBLIC_REPO="true"
               ;;
-            hub.docker.com) 
+            hub.docker.com*) 
               IS_PUBLIC_REPO="true"
               echo "docker hub registry detected"
               docker_registry="docker.io/cardanofoundation"
@@ -200,7 +203,7 @@ runs:
           then
             continue
           fi
-          FILTERED_DOCKER_REGISTRIES="$FILTERED_DOCKER_REGISTRIES $docker_registry"
+          DOCKER_REGISTRIES_FILTERED="$DOCKER_REGISTRIES_FILTERED $docker_registry"
         done
 
         set +e # avoid failing the script if grep fails
@@ -256,7 +259,7 @@ runs:
         echo "PR_NUMBER=${PR_NUMBER}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
         echo "PR_GIT_SHORT_COMMIT=${PR_GIT_SHORT_COMMIT}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
 
-        echo "FILTERED_DOCKER_REGISTRIES=${FILTERED_DOCKER_REGISTRIES}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
+        echo "DOCKER_REGISTRIES_FILTERED=${DOCKER_REGISTRIES_FILTERED}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
 
         echo "GUESSED_ARTIFACT_VERSION=${GUESSED_ARTIFACT_VERSION}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
 
