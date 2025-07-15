@@ -69,6 +69,9 @@ outputs:
   DOCKER_TAG:
     description: 'Docker tag'
     value: ${{ steps.metadata.outputs.DOCKER_TAG }}
+  DOCKER_REGISTRIES_FILTERED:
+    description: 'Filtered docker repositories'
+    value: ${{ steps.metadata.outputs.DOCKER_REGISTRIES_FILTERED }}
   DOCKER_COMMIT_TAG:
     description: 'Docker commit tag'
     value: ${{ steps.metadata.outputs.DOCKER_COMMIT_TAG }}
@@ -107,7 +110,7 @@ runs:
 
     - name: Docker Login (hub.docker.com)
       uses: docker/login-action@v3
-      if: contains(inputs.DOCKER_REGISTRIES, 'hub.docker.com')
+      if: contains(inputs.DOCKER_REGISTRIES, 'hub.docker.com') || contains(inputs.DOCKER_REGISTRIES, 'docker.io')
       with:
         username: ${{ inputs.HUB_DOCKER_COM_USER }}
         password: ${{ inputs.HUB_DOCKER_COM_PASS }}
@@ -141,9 +144,11 @@ runs:
 
         # NOTE: this will be merge-commit sha for PRs
         GIT_SHORT_COMMIT=$(git rev-parse --short ${GITHUB_SHA} | head -c7)
+        PUSH_PUBLIC="true"
 
         case ${GITHUB_EVENT_NAME} in
           pull_request)
+            PUSH_PUBLIC="false"
             TRIGGERING_REF=pr
             BRANCH_NAME=${{ github.event.pull_request.head.ref }}
             PR_BASE_BRANCH_NAME=${{ github.event.pull_request.base.ref }}
@@ -177,6 +182,28 @@ runs:
             fi
             ;;
         esac
+
+        DOCKER_REGISTRIES_FILTERED="" 
+        for docker_registry in ${{ inputs.DOCKER_REGISTRIES }}
+        do
+          case $docker_registry in
+            ghcr.io*|docker.io*) 
+              IS_PUBLIC_REPO="true"
+              ;;
+            hub.docker.com) 
+              IS_PUBLIC_REPO="true"
+              docker_registry="docker.io/cardanofoundation"
+              ;;
+            *) 
+              IS_PUBLIC_REPO="false"
+              ;;
+          esac
+          if [[ "$IS_PUBLIC_REPO" = "true" && "$PUSH_PUBLIC" = "false" ]]
+          then
+            continue
+          fi
+          DOCKER_REGISTRIES_FILTERED="$DOCKER_REGISTRIES_FILTERED $docker_registry"
+        done
 
         set +e # avoid failing the script if grep fails
         # java artifact version guesses
@@ -230,6 +257,8 @@ runs:
         echo "PR_BASE_BRANCH_NAME=${PR_BASE_BRANCH_NAME}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
         echo "PR_NUMBER=${PR_NUMBER}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
         echo "PR_GIT_SHORT_COMMIT=${PR_GIT_SHORT_COMMIT}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
+
+        echo "DOCKER_REGISTRIES_FILTERED=${DOCKER_REGISTRIES_FILTERED}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
 
         echo "GUESSED_ARTIFACT_VERSION=${GUESSED_ARTIFACT_VERSION}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
 
