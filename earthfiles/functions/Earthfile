@@ -4,8 +4,7 @@ VERSION 0.8
 ARG --global DOCKER_IMAGES_TARGETS=""
 ARG --global DOCKER_IMAGE_PREFIX="cf"
 ARG --global DOCKER_IMAGES_EXTRA_TAGS=""
-ARG --global DOCKER_REGISTRIES=""
-ARG --global HUB_DOCKER_COM_USER="cardanofoundation"
+ARG --global DOCKER_REGISTRIES="docker.io/cardanofoundation"
 ARG --global PUSH=false
 
 ALL:
@@ -54,11 +53,9 @@ DOCKER_TAG_N_PUSH:
 
       SET IMAGE_TAG=${image_tag}${TARGET_PLATFORM_TAG}
 
-      IF [ "$PUSH" = "true" ]
-        RUN echo docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${registry}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG} && \
-            docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${registry}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}
-        RUN if docker push ${registry}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}
-      END
+      RUN echo docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${registry}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG} && \
+          docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${registry}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}
+      RUN if [ "$PUSH" = "true" ]; then docker push ${registry}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}; fi
     END
   END
 
@@ -76,13 +73,11 @@ DOCKER_MANIFESTS_MERGE:
   FOR registry IN $DOCKER_REGISTRIES
     FOR image_tag IN $DOCKER_IMAGES_EXTRA_TAGS ${EARTHLY_GIT_SHORT_HASH}
       FOR platform IN $PLATFORM_TAGS
-        IF [ "$PUSH" = "true" ]
-          RUN echo docker manifest create ${registry}/${DOCKER_IMAGE_NAME}:${image_tag} \
-            --amend ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}_${platform} && \
-            docker manifest create ${registry}/${DOCKER_IMAGE_NAME}:${image_tag} \
-            --amend ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}_${platform}
-          RUN docker manifest push ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}
-        END
+        RUN echo docker manifest create ${registry}/${DOCKER_IMAGE_NAME}:${image_tag} \
+          --amend ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}_${platform} && \
+          docker manifest create ${registry}/${DOCKER_IMAGE_NAME}:${image_tag} \
+          --amend ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}_${platform}
+        RUN if [ "$PUSH" = "true" ]; then docker manifest push ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}; fi
       END
     END
   END
