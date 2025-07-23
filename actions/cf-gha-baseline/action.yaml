@@ -159,7 +159,7 @@ runs:
         PUSH_PUBLIC="true"
 
         case ${GITHUB_EVENT_NAME} in
-          pull_request)
+          pull_request|pull_request_target)
             PUSH_PUBLIC="false"
             TRIGGERING_REF=pr
             BRANCH_NAME=${{ github.event.pull_request.head.ref }}
@@ -329,7 +329,7 @@ runs:
               echo "- Triggering branch: ${BRANCH_NAME}"
             fi
             ;;
-          pull_request)
+          pull_request|pull_request_target)
             echo "- PR branch: ${BRANCH_NAME}"
             echo "- PR target branch: ${PR_BASE_BRANCH_NAME}"
             echo "- PR merge commit: ${GIT_SHORT_COMMIT}"
