@@ -63,6 +63,9 @@ outputs:
   PR_GIT_SHORT_COMMIT:
     description: 'PR git short commit'
     value: ${{ steps.metadata.outputs.PR_GIT_SHORT_COMMIT }}
+  IS_PR_FROM_FORK:
+    description: 'Is PR coming from an external repo/fork?'
+    value: ${{ steps.metadata.outputs.IS_PR_FROM_FORK }}
   GUESSED_ARTIFACT_VERSION:
     description: 'Guessed artifact version'
     value: ${{ steps.metadata.outputs.GUESSED_ARTIFACT_VERSION }}
@@ -156,6 +159,14 @@ runs:
             PR_GIT_COMMIT=${{ github.event.pull_request.head.sha }}
             PR_GIT_SHORT_COMMIT=$(git rev-parse --short ${{ github.event.pull_request.head.sha }})
             DOCKER_TAG=PR${PR_NUMBER}
+            PR_HEAD_REPO="${{ github.event.pull_request.head.repo.full_name }}"
+            PR_BASE_REPO="${{ github.repository }}"
+            if [ "${PR_HEAD_REPO}" != "${PR_BASE_REPO}" ]
+            then
+              IS_PR_FROM_FORK="true"
+            else
+              IS_PR_FROM_FORK="false"
+            fi
             git fetch origin ${PR_GIT_COMMIT}
             ;;
           push)
@@ -257,6 +268,7 @@ runs:
         echo "PR_BASE_BRANCH_NAME=${PR_BASE_BRANCH_NAME}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
         echo "PR_NUMBER=${PR_NUMBER}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
         echo "PR_GIT_SHORT_COMMIT=${PR_GIT_SHORT_COMMIT}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
+        echo "IS_PR_FROM_FORK=${IS_PR_FROM_FORK}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
 
         echo "DOCKER_REGISTRIES_FILTERED=${DOCKER_REGISTRIES_FILTERED}" | tee -a "${GITHUB_ENV}" | tee -a "${GITHUB_OUTPUT}"
 
