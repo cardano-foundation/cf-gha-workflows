@@ -160,7 +160,7 @@ runs:
 
         case ${GITHUB_EVENT_NAME} in
           pull_request|pull_request_target)
-            if [[ ! "$PR_HEAD_REPO" =~ ^[a-zA-Z0-9._/-]+$ ]] || [[ ! "$PR_HEAD_REF" =~ ^[a-zA-Z0-9._/-]+$ ]];
+            if [[ ! '${{ github.event.pull_request.head.repo.full_name }}' =~ ^[a-zA-Z0-9._/-]+$ ]] || [[ ! '${{ github.event.pull_request.head.ref }}' =~ ^[a-zA-Z0-9._/-]+$ ]];
             then
               echo "[!] Invalid PR branch or repo name (!= ^[a-zA-Z0-9._/-]+\$). Aborting for security reasons."
               exit 1
