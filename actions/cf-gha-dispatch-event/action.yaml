@@ -10,6 +10,9 @@ inputs:
   EVENT_TYPE:
     description: 'Event type'
     required: true
+  REF:
+    description: 'Git reference of triggered workflow'
+    required: true
   GIT_SHORT_COMMIT:
     description: 'Short commit hash'
     required: false
@@ -45,6 +48,7 @@ runs:
         cat > /tmp/payload.json <<EOF
         {
           "event_type": "${{ inputs.EVENT_TYPE }}",
+          "ref": "${{ inputs.REF }}",
           "client_payload": {
               "TRIGGERING_EVENT": "${{ inputs.TRIGGERING_EVENT }}",
               "TRIGGERING_REF": "${{ inputs.TRIGGERING_REF }}",
