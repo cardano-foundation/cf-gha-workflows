@@ -41,6 +41,8 @@ runs:
     - name: Triggering a workflow in private repository
       shell: bash
       run: |
+
+        TRIGGERING_PAYLOAD=$(echo '${{ inputs.TRIGGERING_PAYLOAD }}' | jq .)
         
         cat > /tmp/payload.json <<EOF
         {
@@ -53,7 +55,7 @@ runs:
               "TRIGGERING_GHRUNID": "${{ inputs.TRIGGERING_GHRUNID }}",
               "TRIGGERING_JOB_NAME": "${{ inputs.TRIGGERING_JOB_NAME }}",
               "GIT_SHORT_COMMIT": "${{ inputs.GIT_SHORT_COMMIT }}",
-              "TRIGGERING_PAYLOAD": ${{ inputs.TRIGGERING_PAYLOAD }}
+              "TRIGGERING_PAYLOAD": ${TRIGGERING_PAYLOAD}
           }
         }
         EOF
