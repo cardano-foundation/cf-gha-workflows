@@ -42,7 +42,8 @@ runs:
       shell: bash
       run: |
 
-        TRIGGERING_PAYLOAD=$(echo '${{ inputs.TRIGGERING_PAYLOAD }}' | jq .)
+        TRIGGERING_PAYLOAD=$(echo '${{ inputs.TRIGGERING_PAYLOAD }}' | jq .) || exit 1
+        [ "${TRIGGERING_PAYLOAD}" = "" ] && TRIGGERING_PAYLOAD="{}"
         
         cat > /tmp/payload.json <<EOF
         {
