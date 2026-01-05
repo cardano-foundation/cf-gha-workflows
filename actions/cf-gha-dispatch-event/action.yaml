@@ -31,6 +31,9 @@ inputs:
   TRIGGERING_JOB_NAME:
     description: 'Job name triggering the workflow'
     required: false
+  TRIGGERING_PAYLOAD:
+    description: 'Payload for triggered workflow. Must be a valid json'
+    required: false
 
 runs:
   using: 'composite'
@@ -38,6 +41,9 @@ runs:
     - name: Triggering a workflow in private repository
       shell: bash
       run: |
+
+        TRIGGERING_PAYLOAD=$(echo '${{ inputs.TRIGGERING_PAYLOAD }}' | jq .) || exit 1
+        [ "${TRIGGERING_PAYLOAD}" = "" ] && TRIGGERING_PAYLOAD="{}"
         
         cat > /tmp/payload.json <<EOF
         {
@@ -49,7 +55,8 @@ runs:
               "TRIGGERING_TAG": "${{ inputs.TRIGGERING_TAG }}",
               "TRIGGERING_GHRUNID": "${{ inputs.TRIGGERING_GHRUNID }}",
               "TRIGGERING_JOB_NAME": "${{ inputs.TRIGGERING_JOB_NAME }}",
-              "GIT_SHORT_COMMIT": "${{ inputs.GIT_SHORT_COMMIT }}"
+              "GIT_SHORT_COMMIT": "${{ inputs.GIT_SHORT_COMMIT }}",
+              "TRIGGERING_PAYLOAD": ${TRIGGERING_PAYLOAD}
           }
         }
         EOF
