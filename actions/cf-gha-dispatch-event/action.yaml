@@ -56,19 +56,13 @@ runs:
         set -euo pipefail
         IFS=$'\n\t'
 
-        # Capture raw TRIGGERING_PAYLOAD via a quoted heredoc so content is preserved literally
-        TRIGGERING_PAYLOAD_RAW=$(cat <<'PAYLOAD'
-        $TRIGGERING_PAYLOAD
-        PAYLOAD
-        )
-
         # Default to empty object when missing/null
-        if [ -z "${TRIGGERING_PAYLOAD_RAW}" ] || [ "${TRIGGERING_PAYLOAD_RAW}" = "null" ]; then
-          TRIGGERING_PAYLOAD_RAW="{}"
+        if [ -z "${TRIGGERING_PAYLOAD}" ] || [ "${TRIGGERING_PAYLOAD}" = "null" ]; then
+          TRIGGERING_PAYLOAD="{}"
         fi
 
         # Validate and compact the JSON payload (fail if invalid)
-        TRIGGERING_PAYLOAD_JSON=$(printf '%s' "$TRIGGERING_PAYLOAD_RAW" | jq -c .) || { echo "Invalid TRIGGERING_PAYLOAD JSON"; exit 1; }
+        TRIGGERING_PAYLOAD_JSON=$(printf '%s' "$TRIGGERING_PAYLOAD" | jq -c .) || { echo "Invalid TRIGGERING_PAYLOAD JSON"; exit 1; }
 
         # Validate GITHUB_REPO format owner/repo
         if ! printf '%s' "$GITHUB_REPO" | grep -Eq '^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$'; then
