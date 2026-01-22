@@ -40,33 +40,66 @@ runs:
   steps:
     - name: Triggering a workflow in private repository
       shell: bash
+      env:
+        EVENT_TYPE: "${{ inputs.EVENT_TYPE }}" 
+        TRIGGERING_EVENT: "${{ inputs.TRIGGERING_EVENT }}" 
+        TRIGGERING_REF: "${{ inputs.TRIGGERING_REF }}" 
+        TRIGGERING_BRANCH: "${{ inputs.TRIGGERING_BRANCH }}" 
+        TRIGGERING_TAG: "${{ inputs.TRIGGERING_TAG }}" 
+        TRIGGERING_GHRUNID: "${{ inputs.TRIGGERING_GHRUNID }}" 
+        TRIGGERING_JOB_NAME: "${{ inputs.TRIGGERING_JOB_NAME }}" 
+        GIT_SHORT_COMMIT: "${{ inputs.GIT_SHORT_COMMIT }}" 
+        GITHUB_REPO: "${{ inputs.GITHUB_REPO }}"
+        TRIGGERING_PAYLOAD: "${{ inputs.TRIGGERING_PAYLOAD }}"
+        GITHUB_TOKEN: "${{ inputs.GITHUB_TOKEN }}"
       run: |
+        set -euo pipefail
+        IFS=$'\n\t'
 
-        TRIGGERING_PAYLOAD=$(echo '${{ inputs.TRIGGERING_PAYLOAD }}' | jq .) || exit 1
-        [ "${TRIGGERING_PAYLOAD}" = "" ] && TRIGGERING_PAYLOAD="{}"
-        
-        cat > /tmp/payload.json <<EOF
-        {
-          "event_type": "${{ inputs.EVENT_TYPE }}",
-          "client_payload": {
-              "TRIGGERING_EVENT": "${{ inputs.TRIGGERING_EVENT }}",
-              "TRIGGERING_REF": "${{ inputs.TRIGGERING_REF }}",
-              "TRIGGERING_BRANCH": "${{ inputs.TRIGGERING_BRANCH }}",
-              "TRIGGERING_TAG": "${{ inputs.TRIGGERING_TAG }}",
-              "TRIGGERING_GHRUNID": "${{ inputs.TRIGGERING_GHRUNID }}",
-              "TRIGGERING_JOB_NAME": "${{ inputs.TRIGGERING_JOB_NAME }}",
-              "GIT_SHORT_COMMIT": "${{ inputs.GIT_SHORT_COMMIT }}",
-              "TRIGGERING_PAYLOAD": ${TRIGGERING_PAYLOAD}
-          }
-        }
-        EOF
+        # Default to empty object when missing/null
+        if [ -z "${TRIGGERING_PAYLOAD}" ] || [ "${TRIGGERING_PAYLOAD}" = "null" ]; then
+          TRIGGERING_PAYLOAD="{}"
+        fi
 
-        jq . /tmp/payload.json
-    
-        curl -L \
-          -X POST \
+        # Validate and compact the JSON payload (fail if invalid)
+        TRIGGERING_PAYLOAD_JSON=$(printf '%s' "$TRIGGERING_PAYLOAD" | jq -c .) || { echo "Invalid TRIGGERING_PAYLOAD JSON"; exit 1; }
+
+        # Validate GITHUB_REPO format owner/repo
+        if ! printf '%s' "$GITHUB_REPO" | grep -Eq '^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$'; then
+          echo "Invalid GITHUB_REPO format; expected owner/repo"
+          exit 1
+        fi
+
+        # Build the request payload using jq with --arg / --argjson to ensure safe escaping
+        jq -n \
+          --arg event_type "$EVENT_TYPE" \
+          --arg triggering_event "$TRIGGERING_EVENT" \
+          --arg triggering_ref "$TRIGGERING_REF" \
+          --arg triggering_branch "$TRIGGERING_BRANCH" \
+          --arg triggering_tag "$TRIGGERING_TAG" \
+          --arg triggering_ghrunid "$TRIGGERING_GHRUNID" \
+          --arg triggering_job_name "$TRIGGERING_JOB_NAME" \
+          --arg git_short_commit "$GIT_SHORT_COMMIT" \
+          --argjson triggering_payload "$TRIGGERING_PAYLOAD_JSON" \
+          '{
+            event_type: $event_type,
+            client_payload: {
+              TRIGGERING_EVENT: $triggering_event,
+              TRIGGERING_REF: $triggering_ref,
+              TRIGGERING_BRANCH: $triggering_branch,
+              TRIGGERING_TAG: $triggering_tag,
+              TRIGGERING_GHRUNID: $triggering_ghrunid,
+              TRIGGERING_JOB_NAME: $triggering_job_name,
+              GIT_SHORT_COMMIT: $git_short_commit,
+              TRIGGERING_PAYLOAD: $triggering_payload
+            }
+          }' \
+          > /tmp/payload.json
+
+        # Post to GitHub API (do not print secrets or full payload)
+        curl -sS --fail -L -X POST \
           -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer ${{ inputs.GITHUB_TOKEN }}" \
+          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
-          https://api.github.com/repos/${{ inputs.GITHUB_REPO }}/dispatches \
-          -d @/tmp/payload.json
+          --data @/tmp/payload.json \
+          "https://api.github.com/repos/${GITHUB_REPO}/dispatches"
