@@ -143,7 +143,7 @@ runs:
     - uses: earthly/actions-setup@main
       if: ${{ inputs.setup_earthly == 'true' }}
       with:
-        use-cache: true
+        use-cache: false
         github-token: ${{ inputs.GITHUB_TOKEN }}
         version: ${{ inputs.EARTHLY_VERSION }}
 
