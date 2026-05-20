@@ -57,8 +57,8 @@ DOCKER_TAG_N_PUSH:
       RUN echo docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${registry}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG} && \
           docker tag ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG} ${registry}/${DOCKER_IMAGE_NAME}:${IMAGE_TAG}
     END
+    RUN if [ "$PUSH" = "true" ]; then docker rm ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG}; docker push --all-tags ${registry}/${DOCKER_IMAGE_NAME}; fi
   END
-  RUN if [ "$PUSH" = "true" ]; then docker push --all-tags ${DOCKER_IMAGE_NAME}:${LATEST_IMAGE_TAG}; fi
 
 DOCKER_MANIFESTS_MERGE:
   FUNCTION
