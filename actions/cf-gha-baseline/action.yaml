@@ -32,6 +32,14 @@ inputs:
     description: 'hub.docker.com password'
     required: false
     default: ''
+  GHCR_IO_USER:
+    description: 'ghcr.io user'
+    required: false
+    default: ''
+  GHCR_IO_TOKEN:
+    description: 'ghcr.io token'
+    required: false
+    default: ''
   working-directory:
     description: 'Working directory'
     required: false
@@ -132,13 +140,14 @@ runs:
         username: ${{ inputs.HUB_DOCKER_COM_USER }}
         password: ${{ inputs.HUB_DOCKER_COM_PASS }}
 
+    # use ${{ github.actor }} and ${{ inputs.GITHUB_TOKEN }} for ghcr.io login unless GHCR_IO_USER and GHCR_IO_TOKEN are set in the workflow, in which case those will be used instead
     - name: Docker Login (ghcr.io)
       uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
       if: contains(inputs.DOCKER_REGISTRIES, 'ghcr.io')
       with:
         registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ inputs.GITHUB_TOKEN }}
+        username: ${{ inputs.GHCR_IO_USER || github.actor }}
+        password: ${{ inputs.GHCR_IO_TOKEN || inputs.GITHUB_TOKEN }}
 
     - name: Setup base depends
       shell: bash
