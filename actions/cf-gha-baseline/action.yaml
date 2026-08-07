@@ -103,6 +103,9 @@ outputs:
   EARTHLY_DOCKER_IMAGES_EXTRA_TAGS:
     description: 'Earthly docker images extra tags'
     value: ${{ steps.metadata.outputs.EARTHLY_DOCKER_IMAGES_EXTRA_TAGS }}
+  EARTH_DOCKER_IMAGES_EXTRA_TAGS:
+    description: 'Earth docker images extra tags'
+    value: ${{ steps.metadata.outputs.EARTH_DOCKER_IMAGES_EXTRA_TAGS }}
   DOCKER_METADATA_OUTPUT_LABELS_COMMA_SEPARATED:
     description: 'Docker metadata output labels comma separated'
     value: ${{ steps.docker-metadata.outputs.DOCKER_METADATA_OUTPUT_LABELS_COMMA_SEPARATED }}
@@ -310,9 +313,11 @@ runs:
         case "${BRANCH_NAME}" in
           main|master)
             echo "EARTHLY_DOCKER_IMAGES_EXTRA_TAGS=${DOCKER_VERSIONED_COMMIT_TAG} ${DOCKER_VERSIONED_COMMIT_GHRUNID_TAG} ${DOCKER_COMMIT_TAG} ${DOCKER_COMMIT_GHRUNID_TAG} ${DOCKER_TAG} latest" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+            echo "EARTH_DOCKER_IMAGES_EXTRA_TAGS=${EARTHLY_DOCKER_IMAGES_EXTRA_TAGS}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
             ;;
           *)
             echo "EARTHLY_DOCKER_IMAGES_EXTRA_TAGS=${DOCKER_VERSIONED_COMMIT_TAG} ${DOCKER_VERSIONED_COMMIT_GHRUNID_TAG} ${DOCKER_COMMIT_TAG} ${DOCKER_COMMIT_GHRUNID_TAG} ${DOCKER_TAG}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
+            echo "EARTH_DOCKER_IMAGES_EXTRA_TAGS=${EARTHLY_DOCKER_IMAGES_EXTRA_TAGS}" | tee -a "$GITHUB_ENV" | tee -a "$GITHUB_OUTPUT"
             ;;
         esac
 
