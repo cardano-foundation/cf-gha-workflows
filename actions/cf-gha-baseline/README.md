@@ -6,6 +6,7 @@ This action sets up a baseline for CF's engineering team GitHub Actions workflow
 - Sets common environment variables and github outputs so they can be leveraged by subsequent steps such as PR base branch, triggering branch, triggering tag, etc.
 - Setup of typical workflow dependencies
 - Provide a set of suggested docker image tags for the builds
+- Discover an artifact version from a selected project directory
 
 # Usage
 
@@ -47,7 +48,19 @@ jobs:
         HUB_DOCKER_COM_USER: ${{ secrets.HUB_DOCKER_COM_USER }}
         HUB_DOCKER_COM_PASS: ${{ secrets.HUB_DOCKER_COM_PASS }}
         DOCKER_REGISTRIES: "${{ secrets.DOCKER_REGISTRIES }}"
+        # Optional for monorepos. Version metadata is read from this directory.
+        artifact-version-directory: path/to/project
 ```
+
+`artifact-version-directory` is resolved relative to `working-directory` and
+defaults to that directory. Point it at the project that owns the artifact when
+a repository contains multiple independently versioned projects. The action
+currently detects versions from `build.gradle.kts`, `gradle.properties`,
+`pom.xml`, `package.json`, and the `[package]` section of `Cargo.toml`.
+
+For a component-scoped release tag such as `gateway/v1.2.3`, the action keeps
+the full tag in `TAG_NAME` but emits the Docker-safe `v1.2.3` in its suggested
+image tags.
 
 # Example outputs
 

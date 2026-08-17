@@ -36,6 +36,10 @@ inputs:
     description: 'Working directory'
     required: false
     default: '.'
+  artifact-version-directory:
+    description: 'Directory relative to working-directory used to discover the artifact version'
+    required: false
+    default: ''
   setup_earthly:
     description: 'Run Earthly setup step?'
     required: false
@@ -241,6 +245,22 @@ runs:
           DOCKER_REGISTRIES_FILTERED="$DOCKER_REGISTRIES_FILTERED $docker_registry"
         done
 
+        ARTIFACT_VERSION_DIRECTORY='${{ inputs.artifact-version-directory }}'
+        if [ -z "${ARTIFACT_VERSION_DIRECTORY}" ]; then
+          ARTIFACT_VERSION_DIRECTORY="."
+        fi
+        if [[ ! "${ARTIFACT_VERSION_DIRECTORY}" =~ ^[a-zA-Z0-9._/-]+$ ]] || \
+           [[ "${ARTIFACT_VERSION_DIRECTORY}" == /* ]] || \
+           [[ "/${ARTIFACT_VERSION_DIRECTORY}/" == *"/../"* ]]; then
+          echo "[!] artifact-version-directory must be relative to working-directory and must not contain '..'."
+          exit 1
+        fi
+        if [ ! -d "${ARTIFACT_VERSION_DIRECTORY}" ]; then
+          echo "[!] Artifact version directory does not exist: ${ARTIFACT_VERSION_DIRECTORY}"
+          exit 1
+        fi
+        pushd "${ARTIFACT_VERSION_DIRECTORY}" >/dev/null
+
         set +e # avoid failing the script if grep fails
         # java artifact version guesses
         if [ -e build.gradle.kts ]
@@ -260,7 +280,18 @@ runs:
         then
           GUESSED_ARTIFACT_VERSION=$(jq -r '.version' package.json)
         fi
+        # rust artifact version guesses. In workspaces, callers should point
+        # artifact-version-directory at the package whose version owns the artifact.
+        if [ -e Cargo.toml ]
+        then
+          GUESSED_ARTIFACT_VERSION=$(awk -F'"' '
+            /^\[package\]/ { in_package=1; next }
+            /^\[/ { in_package=0 }
+            in_package && /^[[:space:]]*version[[:space:]]*=/ { print $2; exit }
+          ' Cargo.toml)
+        fi
         set -e # re-enable errexit
+        popd >/dev/null
         # if no artifact version is found, default to 0.0.1
         GUESSED_ARTIFACT_VERSION=${GUESSED_ARTIFACT_VERSION:-0.0.1}
 
@@ -281,8 +312,11 @@ runs:
             DOCKER_COMMIT_GHRUNID_TAG=${BRANCH_NAME_SHORTENED////-}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
             ;;
           tag)
-            DOCKER_COMMIT_TAG=${TAG_NAME}-${GIT_SHORT_COMMIT}
-            DOCKER_COMMIT_GHRUNID_TAG=${TAG_NAME}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
+            # Component-scoped tags (for example gateway/v1.2.3) use the
+            # prefix only to select an artifact. Docker tags cannot contain '/'.
+            DOCKER_TAG=${DOCKER_TAG##*/}
+            DOCKER_COMMIT_TAG=${DOCKER_TAG}-${GIT_SHORT_COMMIT}
+            DOCKER_COMMIT_GHRUNID_TAG=${DOCKER_TAG}-${GIT_SHORT_COMMIT}-GHRUN${GITHUB_RUN_ID}
             ;;
         esac
 
