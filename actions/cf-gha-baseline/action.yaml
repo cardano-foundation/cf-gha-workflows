@@ -4,7 +4,7 @@ inputs:
   EARTHLY_VERSION:
     description: 'Earthly version to use'
     required: false
-    default: '0.8.15'
+    default: '0.8.19'
   GITHUB_TOKEN:
     description: 'GitHub token'
     required: true
@@ -148,7 +148,7 @@ runs:
       run: |
         pip install yq --break-system-packages
 
-    - uses: earthly/actions-setup@b81a8e082d9fae6174210cfc6e54bd2feb124d94 # main at 30/05/2025
+    - uses: EarthBuild/actions-setup@e11e36ffea530484da8a4e5a4bd17d69de480786 # v2.0.0
       if: ${{ inputs.setup_earthly == 'true' }}
       with:
         use-cache: true
