@@ -24,6 +24,7 @@ full-earthly-example:
     --PUSH=$PUSH \
     --DOCKER_IMAGE_NAME=${DOCKER_IMAGE_NAME} \
     --DOCKER_IMAGES_EXTRA_TAGS="${DOCKER_IMAGES_EXTRA_TAGS}"
+    # --TAG_SUFFIX="-native" # pushes <tag>-native: same repository, variant specific tags
 
 local-dockerfile-exmaple:
   # you need to wait for build to finish or earthly might fail while parallelizing using the 'all'
