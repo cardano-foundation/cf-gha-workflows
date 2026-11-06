@@ -2,7 +2,7 @@ VERSION 0.8
 
 IMPORT --allow-privileged github.com/cardano-foundation/cf-gha-workflows/./earthfiles/functions:main AS functions
 
-ARG --global DOCKER_IMAGES_TARGETS="full-earthly-example local-dockerfile-exmaple"
+ARG --global DOCKER_IMAGES_TARGETS="full-earth-example local-dockerfile-exmaple"
 ARG --global PUSH=false
 ARG --global DOCKER_IMAGES_EXTRA_TAGS="0.0.0-feature-branch-COMMIT-RUNID 0.0.0"
 
@@ -14,9 +14,9 @@ all:
 docker-publish:
   BUILD +all --PUSH=$PUSH
 
-full-earthly-example:
-  ARG EARTHLY_TARGET_NAME
-  LET DOCKER_IMAGE_NAME=${DOCKER_IMAGE_PREFIX}-${EARTHLY_TARGET_NAME}
+full-earth-example:
+  ARG EARTH_TARGET_NAME
+  LET DOCKER_IMAGE_NAME=${DOCKER_IMAGE_PREFIX}-${EARTH_TARGET_NAME}
   FROM alpine
   RUN apk add curl
   SAVE IMAGE ${DOCKER_IMAGE_NAME}
@@ -27,7 +27,7 @@ full-earthly-example:
     # --TAG_SUFFIX="-native" # pushes <tag>-native: same repository, variant specific tags
 
 local-dockerfile-exmaple:
-  # you need to wait for build to finish or earthly might fail while parallelizing using the 'all'
+  # you need to wait for build to finish or earth might fail while parallelizing using the 'all'
   WAIT
     FROM DOCKERFILE -f Dockerfile .
   END

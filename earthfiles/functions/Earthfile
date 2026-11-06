@@ -33,7 +33,7 @@ DOCKER_LABELS:
 
 DOCKER_TAG_N_PUSH:
   FUNCTION
-  ARG EARTHLY_GIT_SHORT_HASH
+  ARG EARTH_GIT_SHORT_HASH
   ARG PUSH # we use this as --push is not supported in LOCALLY blocks
   ARG TARGET_PLATFORM # if specified, only the platform-specific tags will be pushed
   ARG TAG_SUFFIX="" # appended to every pushed tag, e.g. -native for a GraalVM build that
@@ -47,7 +47,7 @@ DOCKER_TAG_N_PUSH:
     LET TARGET_PLATFORM_TAG="_$(echo $TARGET_PLATFORM | sed 's|/|_|g')"
   END
   LET LATEST_IMAGE_TAG=latest${TARGET_PLATFORM_TAG}
-  LET COMMIT_TAG=${EARTHLY_GIT_SHORT_HASH}
+  LET COMMIT_TAG=${EARTH_GIT_SHORT_HASH}
   LET IMAGE_TAG=""
 
   FOR registry IN $DOCKER_REGISTRIES
@@ -64,7 +64,7 @@ DOCKER_TAG_N_PUSH:
 
 DOCKER_MANIFESTS_MERGE:
   FUNCTION
-  ARG EARTHLY_GIT_SHORT_HASH
+  ARG EARTH_GIT_SHORT_HASH
   ARG PLATFORMS
   ARG DOCKER_IMAGE_NAME
   ARG DOCKER_IMAGES_EXTRA_TAGS
@@ -76,7 +76,7 @@ DOCKER_MANIFESTS_MERGE:
   LET PLATFORM_TAGS=$(echo $PLATFORMS | sed 's|/|_|g')
 
   FOR registry IN $DOCKER_REGISTRIES
-    FOR image_tag IN $DOCKER_IMAGES_EXTRA_TAGS ${EARTHLY_GIT_SHORT_HASH}
+    FOR image_tag IN $DOCKER_IMAGES_EXTRA_TAGS ${EARTH_GIT_SHORT_HASH}
       FOR platform IN $PLATFORM_TAGS
         RUN echo docker manifest create ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}${TAG_SUFFIX} \
           --amend ${registry}/${DOCKER_IMAGE_NAME}:${image_tag}${TAG_SUFFIX}_${platform} && \
